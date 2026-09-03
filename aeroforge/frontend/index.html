@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
+<title>AeroForge — Flying-Wing Design Studio</title>
+<link rel="stylesheet" href="/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">
+  <!-- ============ design data panel (left of the stage) ================== -->
+  <aside id="datapanel" class="hidden">
+    <button id="dp_expand" type="button" class="dp-rail" title="Show design data">
+      <span>Design data</span>
+    </button>
+    <div class="dp-head">
+      <div class="dp-tabs" role="tablist">
+        <button type="button" class="dp-tab is-active" data-pane="specs"
+                role="tab" aria-selected="true">Specifications</button>
+        <button type="button" class="dp-tab" data-pane="notes"
+                role="tab" aria-selected="false">Design notes</button>
+      </div>
+      <button id="dp_collapse" type="button" title="Collapse panel">&lsaquo;</button>
+    </div>
+    <div class="dp-body">
+      <div id="specs" class="dp-pane is-active" role="tabpanel"></div>
+      <div id="guidance_body" class="dp-pane" role="tabpanel"></div>
+    </div>
+  </aside>
+
+  <!-- ===================== 3D workspace (centre) ======================== -->
+  <main id="workspace">
+    <div id="stage">
+      <div id="banner" class="hidden"></div>
+      <canvas id="viewport"></canvas>
+      <div id="legend">
+        <span><i class="dot cg"></i>CG</span>
+        <span><i class="dot np"></i>Neutral point</span>
+        <span><i class="dot mac"></i>MAC</span>
+        <span><i class="dot motor"></i>Motors</span>
+        <span><i class="dot box"></i>Size box</span>
+      </div>
+      <div id="part_legend" class="hidden"></div>
+      <div id="stage_busy" class="hidden"><i class="spinner"></i><span>Building preview…</span></div>
+      <div id="hint">Pick a planform and a mission on the right, then press <b>Generate</b> to forge five flying wings.</div>
+    </div>
+
+    <!-- ===================== variant gallery ========================== -->
+    <section id="variants" class="hidden">
+      <div class="variants-head">
+        <span class="variants-title">Wing variants</span>
+        <span class="variants-sub" id="variants_sub"></span>
+        <button id="variants_toggle" type="button" title="Collapse the gallery">&minus;</button>
+      </div>
+      <div id="variant_rail"></div>
+    </section>
+  </main>
+
+  <!-- ===================== input sidebar (right) ======================== -->
+  <aside id="sidebar">
+    <header>
+      <div class="brand">
+        <h1>AeroForge</h1>
+        <p id="brand_sub">Physics-based flying-wing design studio</p>
+      </div>
+      <button id="learn_btn" type="button" title="Open the knowledge base">Learn</button>
+    </header>
+
+    <!-- v2: aircraft-type dropdown — the FIRST step. flying_wing shows the
+         exact v1 sidebar below; conventional / any swap in their own panels. -->
+    <label class="row stack" id="airplane_type_row"
+           title="Aircraft family — picks which design panel drives the studio">
+      <span>Aircraft type</span>
+      <select id="airplane_type"></select>
+    </label>
+    <p class="opt-note" id="airplane_type_note"></p>
+
+    <label class="row pane-fw" title="Load a ready-made flying-wing setup">
+      <span>Preset</span>
+      <select id="preset"><option value="">— choose a preset —</option></select>
+    </label>
+
+    <!-- v2: conventional / any panel — hidden while airplane_type is
+         flying_wing, so the v1 sidebar renders exactly as before. -->
+    <details open class="pane-alt">
+      <summary>Aircraft configuration</summary>
+      <label class="row stack pane-conv"
+             title="Conventional character — every run generates all five; this picks which one leads the gallery">
+        <span>Style</span>
+        <select id="conv_style"></select>
+      </label>
+      <p class="opt-note pane-conv" id="conv_style_note"></p>
+      <label class="row stack"
+             title="What the aeroplane is optimized for: sets static margin, wing-loading band and stall margin">
+        <span>Mission</span>
+        <select id="alt_mission"></select>
+      </label>
+      <p class="opt-note" id="alt_mission_note"></p>
+    </details>
+
+    <!-- v3: configuration axes (motor layout / tail type / wing position).
+         Each row appears only for the types where the axis offers a real
+         choice (server-declared in /api/options axes, transcribed from
+         RESEARCH_TYPES_V3.md §10.4). "Type default" sends nothing, so a bare
+         request stays byte-identical to before. -->
+    <details open class="pane-alt" id="cfg_block">
+      <summary>Configuration</summary>
+      <label class="row" id="cfg_row_motor_layout"
+             title="Tractor pulls from the nose; a pusher prop rides behind, clear of the camera view">
+        <span>Motor layout</span>
+        <select id="cfg_motor_layout"></select>
+      </label>
+      <label class="row" id="cfg_row_tail_type"
+             title="How the stabilizers are arranged — a V-tail is sized by projected-area equivalence, a T-tail rides atop the fin">
+        <span>Tail type</span>
+        <select id="cfg_tail_type"></select>
+      </label>
+      <label class="row" id="cfg_row_wing_position"
+             title="High wing is the stable trainer default; a low wing needs more geometric dihedral for the same manners">
+        <span>Wing position</span>
+        <select id="cfg_wing_position"></select>
+      </label>
+      <p class="note" id="cfg_note">“Type default” keeps this family's
+        researched configuration.</p>
+    </details>
+
+    <details open class="pane-fw">
+      <summary>Wing configuration</summary>
+      <label class="row stack" title="Planform family — the overall shape of the wing">
+        <span>Planform</span>
+        <select id="planform"></select>
+      </label>
+      <p class="opt-note" id="planform_note"></p>
+      <label class="row stack" title="What the wing is optimized for: sets static margin, wing-loading band and stall margin">
+        <span>Mission</span>
+        <select id="mission"></select>
+      </label>
+      <p class="opt-note" id="mission_note"></p>
+      <label class="row stack" id="vstab_row" title="Directional-stability surfaces available for this planform">
+        <span>Vertical surfaces</span>
+        <select id="vstab"><option value="auto">Auto</option></select>
+      </label>
+      <p class="opt-note" id="vstab_note"></p>
+    </details>
+
+    <details open>
+      <summary>Mission targets</summary>
+      <label class="row" title="Speed the wing is optimized to cruise at">
+        <span>Cruise speed</span>
+        <span class="pair">
+          <input type="number" id="cruise_ms" value="16" min="5" max="60" step="0.5"><em>m/s</em>
+          <input type="number" id="cruise_mph" value="35.8" min="11" max="134" step="0.5"><em>mph</em>
+        </span>
+      </label>
+      <label class="row" title="Leave on Auto for a safe margin below cruise">
+        <span>Stall speed</span>
+        <span class="pair">
+          <select id="stall_mode"><option value="auto">Auto (safe margin)</option><option value="target">Target…</option></select>
+          <input type="number" id="stall_ms" value="8" min="3" max="30" step="0.5" disabled><em>m/s</em>
+        </span>
+      </label>
+      <label class="row" title="FPV gear, camera or other cargo carried in the centre body">
+        <span>Payload</span>
+        <span class="pair"><input type="number" id="payload_g" value="0" min="0" max="5000" step="10"><em>g</em></span>
+      </label>
+    </details>
+
+    <details open>
+      <summary>Size box (hard limit)</summary>
+      <p class="note" id="box_note">The assembled wing must fit inside this box. Wings are short and wide — give width, not length.</p>
+      <label class="row"><span>Length</span><span class="pair"><input type="number" id="box_l" value="700" min="100" max="5000" step="10"><em>mm</em></span></label>
+      <label class="row"><span>Width (span)</span><span class="pair"><input type="number" id="box_w" value="1200" min="100" max="5000" step="10"><em>mm</em></span></label>
+      <label class="row"><span>Height</span><span class="pair"><input type="number" id="box_h" value="300" min="50" max="2000" step="10"><em>mm</em></span></label>
+      <!-- task 5: advisory minimum per type (config_defs.RECOMMENDED_MIN_BOX_MM
+           via /api/types) - amber below it, never enforced -->
+      <p class="note box-reco" id="box_reco" hidden></p>
+      <label class="row check" title="Purely informational — the optimizer always fits the assembled aircraft">
+        <input type="checkbox" id="allow_folding"><span>Allow removable / plug-in wing panels</span>
+      </label>
+    </details>
+
+    <!-- v2: minimal motor-count block for the conventional / any panels -->
+    <details class="pane-alt">
+      <summary>Motors</summary>
+      <label class="row" title="Electric motors on the airframe — sets the motor layout and markers">
+        <span>Motors</span>
+        <select id="alt_n_motors"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+      </label>
+      <p class="note" id="alt_motors_note">A conventional model flies a single tractor motor on the nose. Motor positions are shown in the 3D view; AeroForge does not size props, Kv or batteries.</p>
+    </details>
+
+    <details class="pane-fw">
+      <summary>Motors</summary>
+      <label class="row" title="Electric motors on the airframe — sets the motor layout and markers">
+        <span>Motors</span>
+        <select id="n_motors"><option>1</option><option>2</option><option>3</option><option>4</option></select>
+      </label>
+      <p class="note">Most wings use a single pusher at the centre trailing edge. Motor positions are shown in the 3D view; AeroForge does not size props, Kv or batteries.</p>
+
+      <label class="row" title="Auto picks the standard RC outrunner pattern from the wing's all-up mass (16×16 mm for 2204–2306, 19×19 for 2212–2814, 25×25 above — all M3)">
+        <span>Mount pattern</span>
+        <select id="mount_mode">
+          <option value="auto">Auto (from wing size)</option>
+          <option value="set">Set from my motor…</option>
+        </select>
+      </label>
+      <label class="row" title="Screws holding the motor to the mount — RC outrunners are almost always 4 in a square">
+        <span>Screw holes</span>
+        <select id="mount_screws" disabled>
+          <option>2</option><option>3</option><option selected>4</option><option>6</option>
+        </select>
+      </label>
+      <label class="row" title="Clearance hole diameter. M3 needs 3.2 mm, M2.5 needs 2.7, M2 needs 2.2">
+        <span>Screw hole Ø</span>
+        <span class="pair"><input type="number" id="mount_screw_d" value="3.2" min="1.5" max="8" step="0.1" disabled><em>mm</em></span>
+      </label>
+      <label class="row" title="Distance from the motor's centre to each screw hole. A square pattern of side s has radius s ÷ √2 — so 19×19 mm is 13.44 mm">
+        <span>Bolt-circle radius</span>
+        <span class="pair"><input type="number" id="mount_bolt_circle" value="13.44" min="4" max="40" step="0.01" disabled><em>mm</em></span>
+      </label>
+      <p class="note" id="mount_note">Measure your motor's bolt spacing across the flats and divide by √2, or read the pattern off its spec sheet. These numbers are what gets drilled in the exported model.</p>
+    </details>
+
+    <details>
+      <summary>Structure</summary>
+      <label class="row" title="Affects weight model and wall thickness">
+        <span>Build method</span>
+        <select id="build_method"><option value="3d_printed">3D-printed</option><option value="foamboard">Foamboard</option></select>
+      </label>
+      <label class="row" title="Material density preset for the weight model">
+        <span>Material</span>
+        <select id="material"></select>
+      </label>
+    </details>
+
+    <details class="pane-fw">
+      <summary>Advanced</summary>
+      <label class="row" title="Tailless wings need a reflexed section. Auto selects by Reynolds number and mission">
+        <span>Airfoil</span>
+        <select id="airfoil"><option value="auto">Auto</option></select>
+      </label>
+      <label class="row" title="Wing slenderness b²/S. Sport wings sit near 4, Horten floaters near 8. Auto = optimized">
+        <span>Aspect ratio</span>
+        <span class="pair">
+          <select id="ar_mode"><option value="auto">Auto</option><option value="set">Set…</option></select>
+          <input type="number" id="ar" value="4.5" min="3" max="12" step="0.5" disabled>
+        </span>
+      </label>
+      <label class="row" title="Distance the CG sits ahead of the neutral point, % of MAC. Tailless wings fly at 3–15%, not the 4–20% of a tailed model">
+        <span>Static margin</span>
+        <span class="pair">
+          <select id="sm_mode"><option value="auto">Auto (5–10%)</option><option value="set">Set…</option></select>
+          <input type="number" id="sm" value="8" min="3" max="15" step="0.5" disabled><em>%</em>
+        </span>
+      </label>
+    </details>
+
+    <div id="actions">
+      <button id="generate">Generate</button>
+      <div class="export">
+        <button id="export_step" disabled title="CAD assembly: one named body per part">Export STEP</button>
+        <button id="export_stl" disabled title="The whole wing as one watertight solid">Export STL</button>
+      </div>
+      <button id="export_parts" class="export-wide" disabled
+              title="One STL per part in a zip — the hatch lid prints separately">Export parts (STL zip)</button>
+      <div id="build_progress" class="hidden" role="progressbar"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="bp-bar"><div class="bp-fill"></div></div>
+        <div class="bp-text"><span class="bp-stage"></span><span class="bp-eta"></span></div>
+      </div>
+    </div>
+    <footer>Estimates are guidance-grade — validate before you build.</footer>
+  </aside>
+</div>
+
+<!-- ===================== Learn overlay (knowledge browser) ============== -->
+<div id="learn_modal" class="hidden">
+  <div class="learn-card" role="dialog" aria-label="Knowledge base">
+    <div class="learn-head">
+      <span class="learn-title">Knowledge base</span>
+      <button id="learn_close" type="button" title="Close">&times;</button>
+    </div>
+    <div class="learn-body">
+      <ul id="learn_list"></ul>
+      <article id="learn_article">
+        <p class="placeholder">Select an article on the left.</p>
+      </article>
+    </div>
+  </div>
+</div>
+<!-- ===================== confirm dialog (task 5: UI safety) ============== -->
+<div id="confirm_modal" class="hidden">
+  <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="confirm_title">
+    <div class="confirm-head"><span class="confirm-title" id="confirm_title"></span></div>
+    <div class="confirm-body" id="confirm_body"></div>
+    <div class="confirm-actions">
+      <button id="confirm_cancel" type="button">Cancel</button>
+      <button id="confirm_ok" type="button"></button>
+    </div>
+  </div>
+</div>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+{
+ "generate:flying_wing": [
+  {
+   "duration_s": 17.797,
+   "stages": {},
+   "at": 1787920548.2637904
+  },
+  {
+   "duration_s": 24.392,
+   "stages": {},
+   "at": 1787920633.1368194
+  },
+  {
+   "duration_s": 24.182,
+   "stages": {},
+   "at": 1787921400.4552293
+  },
+  {
+   "duration_s": 16.883,
+   "stages": {},
+   "at": 1787925909.4283922
+  },
+  {
+   "duration_s": 14.172,
+   "stages": {},
+   "at": 1787933055.3644302
+  }
+ ],
+ "flying_wing:step": [
+  {
+   "duration_s": 1871.794,
+   "stages": {
+    "queued": 0.14,
+    "loft": 12.584,
+    "bay": 256.327,
+    "fins": 108.728,
+    "hinges": 60.612,
+    "servos": 143.775,
+    "split": 4.197,
+    "write": 3.599
+   },
+   "at": 1787905174.6449513
+  },
+  {
+   "duration_s": 847.462,
+   "stages": {
+    "queued": 0.136,
+    "loft": 11.907,
+    "bay": 152.061,
+    "fins": 235.684,
+    "hinges": 77.958,
+    "servos": 153.889,
+    "split": 3.517,
+    "write": 3.311
+   },
+   "at": 1787934671.9260786
+  }
+ ],
+ "flying_wing:stl:cached": [
+  {
+   "duration_s": 1196.889,
+   "stages": {
+    "queued": 0.036,
+    "write": 1.865
+   },
+   "at": 1787922643.0061824
+  }
+ ],
+ "generate:conventional": [
+  {
+   "duration_s": 3.733,
+   "stages": {},
+   "at": 1787922869.0762067
+  }
+ ],
+ "flying_wing:step:cached": [
+  {
+   "duration_s": 379.177,
+   "stages": {
+    "queued": 0.133,
+    "write": 2.887
+   },
+   "at": 1787922896.8256903
+  }
+ ],
+ "generate:delta": [
+  {
+   "duration_s": 7.166,
+   "stages": {},
+   "at": 1787923326.091513
+  },
+  {
+   "duration_s": 5.17,
+   "stages": {},
+   "at": 1787923692.6864197
+  }
+ ],
+ "generate:twin_boom": [
+  {
+   "duration_s": 2.914,
+   "stages": {},
+   "at": 1787923329.0211375
+  },
+  {
+   "duration_s": 3.584,
+   "stages": {},
+   "at": 1787923696.2985115
+  }
+ ],
+ "generate:canard": [
+  {
+   "duration_s": 1.443,
+   "stages": {},
+   "at": 1787923330.6511073
+  },
+  {
+   "duration_s": 2.037,
+   "stages": {},
+   "at": 1787923698.347016
+  },
+  {
+   "duration_s": 1.643,
+   "stages": {},
+   "at": 1787925890.8984292
+  }
+ ],
+ "conventional:step:cached": [
+  {
+   "duration_s": 1626.563,
+   "stages": {
+    "queued": 0.171,
+    "write": 6.193
+   },
+   "at": 1787925242.5391634
+  }
+ ]
+}

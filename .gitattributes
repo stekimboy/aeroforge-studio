@@ -1,0 +1,9 @@
+# CAD and images must round-trip byte-exact on every platform
+*.step -text
+*.stp -text
+*.stl binary
+*.png binary
+*.PNG binary
+*.jpg binary
+*.sh text eol=lf
+*.bat text eol=crlf

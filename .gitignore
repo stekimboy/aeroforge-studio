@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Generated artifacts (previews, exports, worker scratch) - gigabytes, never committed
+aeroforge/exports/*
+!aeroforge/exports/.gitkeep
+!aeroforge/exports/timing.json
+*.partial.stl
+# Ad-hoc STL dumps written beside the code (e.g. preview_check.stl); tracked STLs live at the repo root, CFD_STLs/ and My-Designs/
+aeroforge/*.stl
+
+# Server logs from run.bat / detached launches
+aeroforge/server.log
+aeroforge/server.err
+aeroforge/.server.pid
+
+# Test-suite BREP caches (opt-in, machine-local)
+aeroforge_mw_test_cache/
+aeroforge_test_cad_cache/
+
+# OS / editor noise
+Thumbs.db
+.DS_Store
+
+aeroforge/.cadlock
